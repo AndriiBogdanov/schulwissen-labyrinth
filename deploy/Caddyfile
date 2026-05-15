@@ -1,0 +1,41 @@
+# =====================================================================
+#  Caddy-Konfiguration für Duck-DNS-Hosting
+# ---------------------------------------------------------------------
+#  Caddy 2 holt automatisch ein Let's-Encrypt-Zertifikat via HTTP-01-
+#  Challenge. Voraussetzung: Port 80 + 443 von außen erreichbar.
+#
+#  Die Variable {$DOMAIN} kommt aus deploy/.env (z. B.
+#  schulwissen-labyrinth.duckdns.org).
+# =====================================================================
+
+{$DOMAIN} {
+	root * /srv/labyrinth
+	encode zstd gzip
+
+	# Cache: lange für Hash-Assets, kurz für index.html
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	@html path /index.html /
+	header @html Cache-Control "no-cache"
+
+	# Security-Header
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "interest-cohort=()"
+		-Server
+	}
+
+	file_server
+
+	# Da die App rein client-side ist (kein Routing), reicht ein
+	# einfacher 404-Fallback auf index.html.
+	try_files {path} /index.html
+
+	log {
+		output stdout
+		format console
+	}
+}

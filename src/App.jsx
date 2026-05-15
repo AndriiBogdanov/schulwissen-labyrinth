@@ -5,6 +5,9 @@ import {
   Brand, VolumeOn, VolumeOff,
   typeIcon, topicIcon
 } from './icons.jsx'
+import {
+  CornerOrnament, TitleDivider, Candle, MazeBackdrop, WaxSeal
+} from './decorations.jsx'
 
 const TYPE_TAGS = {
   start: 'Eingang',
@@ -39,7 +42,6 @@ function Tag({ kind, children }) {
 }
 
 function HeroIcon({ room }) {
-  // Decorative hero icon im Eck der Karte (themenspezifisch oder Raumtyp).
   const Topic = topicIcon(room.id)
   const Type = typeIcon(room.type, room.variant)
   const Comp = Topic || Type
@@ -47,6 +49,18 @@ function HeroIcon({ room }) {
   return (
     <div className="hero-icon" aria-hidden="true">
       <Comp size={64} stroke={1.2} />
+    </div>
+  )
+}
+
+// Manuscript-Rahmen: 4 Eck-Ornamente in der Karte
+function CardFrame() {
+  return (
+    <div className="card-frame" aria-hidden="true">
+      <CornerOrnament position="tl" />
+      <CornerOrnament position="tr" />
+      <CornerOrnament position="bl" />
+      <CornerOrnament position="br" />
     </div>
   )
 }
@@ -67,7 +81,12 @@ function RoomHead({ room }) {
           </Tag>
         )}
       </div>
-      {room.title && <h2 className="room-title">{room.title}</h2>}
+      {room.title && (
+        <>
+          <h2 className="room-title">{room.title}</h2>
+          <TitleDivider />
+        </>
+      )}
     </header>
   )
 }
@@ -83,9 +102,11 @@ function Scene({ text }) {
 function StartRoom({ room, onNavigate, onEnableSound }) {
   return (
     <section className="room room-start">
+      <CardFrame />
       <HeroIcon room={room} />
       <div className="start-eyebrow">Schulprojekt · Deutsch &amp; Mathematik</div>
       <h1 className="start-title">{room.title}</h1>
+      <TitleDivider />
       <p className="start-intro">{room.intro}</p>
 
       <div className="how-it-works">
@@ -120,6 +141,7 @@ function DecisionRoom({ room, onNavigate }) {
   const isDoors = room.variant === 'doors'
   return (
     <section className={`room room-decision ${isDoors ? 'room-doors' : ''}`}>
+      <CardFrame />
       <HeroIcon room={room} />
       <RoomHead room={room} />
       <Scene text={room.scene} />
@@ -191,6 +213,7 @@ function InputRoom({ room, onNavigate, mode = 'text' }) {
 
   return (
     <section className={`room room-input ${mode === 'numeric' ? 'room-numeric' : ''}`}>
+      <CardFrame />
       <HeroIcon room={room} />
       <RoomHead room={room} />
       <Scene text={room.scene} />
@@ -244,6 +267,7 @@ function SortingRoom({ room, onNavigate }) {
 
   return (
     <section className="room room-sorting">
+      <CardFrame />
       <HeroIcon room={room} />
       <RoomHead room={room} />
       <Scene text={room.scene} />
@@ -315,6 +339,7 @@ function SortingRoom({ room, onNavigate }) {
 function CorridorRoom({ room, onNavigate }) {
   return (
     <section className="room room-corridor">
+      <CardFrame />
       <HeroIcon room={room} />
       <RoomHead room={room} />
       <Scene text={room.scene} />
@@ -335,6 +360,7 @@ function TrapRoom({ room, lastBranchPoint, onNavigate, onRestart }) {
 
   return (
     <section className="room room-trap">
+      <CardFrame />
       <HeroIcon room={room} />
       <RoomHead room={room} />
       <Scene text={room.scene} />
@@ -373,6 +399,7 @@ function FinalRoom({ room, stats, onRestart }) {
       : 'Mehrere Fallen — aber du hast den Ausgang gefunden. Das Labyrinth hat seine Aufgabe getan.'
   return (
     <section className="room room-final">
+      <CardFrame />
       <HeroIcon room={room} />
       <RoomHead room={room} />
       <Scene text={room.scene} />
@@ -528,8 +555,13 @@ export default function App() {
   return (
     <div className="app">
       {/* Atmosphärische Hintergrund-Layer */}
+      <div className="bg-layer bg-stone" aria-hidden />
+      <div className="bg-layer bg-maze" aria-hidden>
+        <MazeBackdrop />
+      </div>
       <div className="bg-layer bg-vignette" aria-hidden />
-      <div className="bg-layer bg-grid" aria-hidden />
+      <Candle side="left" />
+      <Candle side="right" />
       <div className="bg-layer bg-particles" aria-hidden>
         {particles.map((i) => (
           <span key={i} className={`particle p-${i % 6}`} style={{

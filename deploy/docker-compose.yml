@@ -1,0 +1,65 @@
+# =====================================================================
+#  Schulwissen-Labyrinth – Self-Hosting via Duck DNS + Caddy
+# ---------------------------------------------------------------------
+#  Was läuft hier:
+#    • caddy    – Reverse-Proxy mit AUTOMATISCHEM Let's-Encrypt-Zertifikat
+#                 für deine Duck-DNS-Subdomain. Liefert dist/ als statische
+#                 Seite aus.
+#    • duckdns  – LinuxServer-Container, der alle 5 Minuten deine
+#                 aktuelle öffentliche IP an Duck DNS schickt.
+#
+#  Voraussetzungen:
+#    1. Server mit öffentlicher IP (Heim-Router mit Port-Forwarding für
+#       80 + 443, oder VPS bei Hetzner/Oracle Free/Fly.io etc.).
+#    2. Duck-DNS-Account → SUBDOMAIN + TOKEN aus https://www.duckdns.org
+#    3. Docker + docker-compose installiert.
+#    4. Auf dem Host das Repo geklont und `npm ci && npm run build` einmal
+#       gelaufen, sodass dist/ existiert.
+#
+#  Start:
+#    cd deploy/
+#    cp .env.example .env       # SUBDOMAIN + TOKEN eintragen
+#    docker compose up -d
+#
+#  Logs:
+#    docker compose logs -f caddy
+#    docker compose logs -f duckdns
+# =====================================================================
+
+services:
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: labyrinth-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../dist:/srv/labyrinth:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+  duckdns:
+    image: lscr.io/linuxserver/duckdns:latest
+    container_name: labyrinth-duckdns
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Berlin
+      - SUBDOMAINS=${DUCKDNS_SUBDOMAIN}
+      - TOKEN=${DUCKDNS_TOKEN}
+      - LOG_FILE=false
+      - UPDATE_IP=both   # IPv4 + IPv6
+    volumes:
+      - duckdns_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
+  duckdns_config:
