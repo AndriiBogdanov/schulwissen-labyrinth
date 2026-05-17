@@ -1289,6 +1289,13 @@ body::before {
   .final-summary { grid-template-columns: repeat(2, 1fr); }
   .hero-icon { top: 22px; right: 22px; }
   .hero-icon svg { width: 48px; height: 48px; }
+  /* In Start-Karte: Hero-Icon raus, sonst kollidiert es mit dem
+     gesperrten Eyebrow-Text "SCHULPROJEKT · DEUTSCH & MATHEMATIK". */
+  .room-start .hero-icon { display: none; }
+  /* Untere Ecken in der Start-Karte raus, sonst landen sie
+     ueber dem start-hint. Oben sind sie nicht im Weg. */
+  .room-start .corner-bl,
+  .room-start .corner-br { display: none; }
 }
 
 @media (max-width: 420px) {

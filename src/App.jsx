@@ -579,7 +579,7 @@ export default function App() {
           <span className="brand-mark" aria-hidden>
             <Brand size={18} stroke={2} />
           </span>
-          <span className="brand-name">Schulwissen-Labyrinth</span>
+          <span className="brand-name">Schulwissen</span>
         </div>
         <div className="app-top-actions">
           <button
