@@ -129,7 +129,7 @@ function StartRoom({ room, onNavigate, onEnableSound }) {
             onNavigate(room.next, room)
           }}
         >
-          Labyrinth betreten →
+          Hineingehen →
         </button>
         <span className="start-hint">Klick startet die Klangkulisse — du kannst sie oben wieder ausschalten.</span>
       </div>
@@ -393,10 +393,10 @@ function FinalRoom({ room, stats, onRestart }) {
   const { visitedSize, totalRooms, trapsHit, steps } = stats
   const note =
     trapsHit === 0
-      ? 'Direkt durch das Labyrinth — keine Falle, keine Umwege. Sauberer Lauf.'
+      ? 'Direkt durchgekommen — keine Falle, keine Umwege. Sauberer Lauf.'
       : trapsHit === 1
-      ? 'Einmal in der Falle, einmal zurück. Genau dafür ist Escape gebaut: man merkt, wo man falsch war.'
-      : 'Mehrere Fallen — aber du hast den Ausgang gefunden. Das Labyrinth hat seine Aufgabe getan.'
+      ? 'Einmal in der Falle, einmal zurück. Genau so merkt man, wo man falsch lag.'
+      : 'Ein paar Mal danebengelegen — aber du hast den Ausgang gefunden.'
   return (
     <section className="room room-final">
       <CardFrame />

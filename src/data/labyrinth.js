@@ -45,7 +45,7 @@ export const labyrinth = {
   start: {
     id: 'start',
     type: 'start',
-    title: 'Schulwissen-Labyrinth',
+    title: 'Die alte Schule',
     intro:
       'Du betrittst eine alte Schule. Die Tafeln stehen noch, die Stühle auch — ' +
       'aber irgendetwas ist anders. Hinter jeder Tür wartet eine Aufgabe aus ' +

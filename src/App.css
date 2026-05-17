@@ -599,9 +599,10 @@ body::before {
 
 .scene {
   font-family: var(--sans);
-  font-size: 17px;
-  line-height: 1.7;
-  color: var(--parchment-dim);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--parchment);
   margin: 0 0 26px 0;
   padding: 4px 0 4px 20px;
   border-left: 2px solid var(--brass-dark);
@@ -623,12 +624,12 @@ body::before {
 
 .prompt {
   font-family: var(--sans);
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 600;
-  line-height: 1.45;
+  line-height: 1.4;
   color: var(--parchment);
   margin: 0 0 28px 0;
-  letter-spacing: 0.005em;
+  letter-spacing: 0;
 }
 
 /* =====================================================================
@@ -666,9 +667,10 @@ body::before {
 
 .start-intro {
   font-family: var(--sans);
-  font-size: 17px;
-  line-height: 1.7;
-  color: var(--parchment-dim);
+  font-size: 19px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--parchment);
   margin: 0 0 30px 0;
 }
 
@@ -710,7 +712,8 @@ body::before {
   align-items: flex-start;
   gap: 16px;
   font-family: var(--sans);
-  font-size: 17px;
+  font-size: 18px;
+  font-weight: 400;
   line-height: 1.55;
   color: var(--parchment-dim);
 }
@@ -780,7 +783,7 @@ body::before {
   border-radius: 3px;
   cursor: pointer;
   font-family: var(--sans);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.5;
   font-weight: 500;
   transition: all 0.22s;
@@ -1161,8 +1164,8 @@ body::before {
 .hint p {
   margin: 0;
   font-family: var(--sans);
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: 18px;
+  line-height: 1.6;
   color: #f8e0b8;
 }
 
@@ -1233,10 +1236,9 @@ body::before {
 
 .final-note {
   font-family: var(--sans);
-  font-size: 17px;
-  line-height: 1.65;
-  font-style: italic;
-  color: var(--parchment-dim);
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--parchment);
   margin: 0 0 28px 0;
   padding: 16px 18px;
   background: rgba(226, 194, 94, 0.06);
@@ -1273,8 +1275,11 @@ body::before {
   .corner-br { bottom: 4px; right: 4px; }
   .start-title { font-size: 36px; }
   .room-title { font-size: 24px; }
-  .prompt { font-size: 18px; }
-  .scene { font-size: 16px; }
+  .prompt { font-size: 20px; }
+  .scene { font-size: 17px; }
+  .start-intro { font-size: 17px; }
+  .hiw-list li { font-size: 16px; }
+  .option { font-size: 16px; }
   .scene::first-letter { font-size: 38px; }
   .doors { grid-template-columns: 1fr; }
   .door { min-height: auto; flex-direction: row; gap: 16px; padding: 18px; }
