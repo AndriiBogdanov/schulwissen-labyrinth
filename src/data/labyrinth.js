@@ -47,18 +47,17 @@ export const labyrinth = {
     type: 'start',
     title: 'Schulwissen-Labyrinth',
     intro:
-      'Du betrittst ein altes Schulgebäude, das sich in ein Labyrinth verwandelt hat. ' +
-      'In jedem Raum wartet eine Aufgabe aus Deutsch oder Mathematik. Jede Entscheidung ' +
-      'führt durch einen Korridor in den nächsten Raum. Manche Gänge wirken vertraut, ' +
-      'andere ein wenig anders. Das System verrät dir nicht, ob deine Wahl richtig war ' +
-      '– du merkst es erst am Verlauf des Weges. Irgendwo im Labyrinth lauert eine Falle ' +
-      'für alle, die sich verlaufen haben. Finde den Ausgang.',
+      'Du betrittst eine alte Schule. Die Tafeln stehen noch, die Stühle auch — ' +
+      'aber irgendetwas ist anders. Hinter jeder Tür wartet eine Aufgabe aus ' +
+      'Deutsch oder Mathematik. Du entscheidest, welcher Weg dich weiterbringt. ' +
+      'Ob deine Wahl richtig war, sagt dir hier niemand — du merkst es selbst, ' +
+      'an dem, was als Nächstes kommt. Finde den Ausgang.',
     steps: [
-      'Lies die Aufgabe und schau dir die Optionen genau an.',
-      'Triff deine Wahl – das System sagt dir NICHT „richtig" oder „falsch".',
-      'Im Korridor danach beschreibt der Text, wohin du gehst und was du siehst.',
-      'Beobachte die Stimmung: Wird der Weg unheimlich? Vielleicht bist du falsch abgebogen.',
-      'Landest du in der Falle, denk an die letzte Hauptentscheidung – dort beginnt der Rückweg.'
+      'Lies die Aufgabe und schau dir die Optionen in Ruhe an.',
+      'Klick auf die Antwort, die du für richtig hältst.',
+      'Der nächste Raum zeigt dir, wohin dein Weg führt.',
+      'Wirkt der Gang seltsam? Dann liegst du vielleicht daneben.',
+      'Landest du in einer Falle, kommst du zurück zur letzten Entscheidung.'
     ],
     next: 'q_m1'
   },

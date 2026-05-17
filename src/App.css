@@ -45,8 +45,7 @@
   --t-deutsch: #b86a55;
   --t-mathematik: #7da06a;
 
-  --serif: 'Cinzel', 'Cormorant Garamond', 'Georgia', serif;
-  --book: 'Cormorant Garamond', 'Georgia', serif;
+  --serif: 'Cinzel', 'Georgia', serif;
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 
@@ -61,7 +60,7 @@
 html, body, #root { margin: 0; padding: 0; min-height: 100%; }
 
 body {
-  font-family: var(--book);
+  font-family: var(--sans);
   color: var(--ink);
   background-color: var(--bg-0);
   -webkit-font-smoothing: antialiased;
@@ -599,12 +598,11 @@ body::before {
    ===================================================================== */
 
 .scene {
-  font-family: var(--book);
-  font-size: 18px;
-  line-height: 1.75;
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.7;
   color: var(--parchment-dim);
   margin: 0 0 26px 0;
-  font-style: italic;
   padding: 4px 0 4px 20px;
   border-left: 2px solid var(--brass-dark);
   position: relative;
@@ -624,8 +622,8 @@ body::before {
 }
 
 .prompt {
-  font-family: var(--book);
-  font-size: 21px;
+  font-family: var(--sans);
+  font-size: 19px;
   font-weight: 600;
   line-height: 1.45;
   color: var(--parchment);
@@ -667,9 +665,9 @@ body::before {
 }
 
 .start-intro {
-  font-family: var(--book);
-  font-size: 18px;
-  line-height: 1.75;
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.7;
   color: var(--parchment-dim);
   margin: 0 0 30px 0;
 }
@@ -711,7 +709,7 @@ body::before {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  font-family: var(--book);
+  font-family: var(--sans);
   font-size: 17px;
   line-height: 1.55;
   color: var(--parchment-dim);
@@ -745,7 +743,7 @@ body::before {
   font-size: 12px;
   color: var(--ink-muted);
   letter-spacing: 0.04em;
-  font-family: var(--book);
+  font-family: var(--sans);
   font-style: italic;
 }
 
@@ -781,7 +779,7 @@ body::before {
   padding: 17px 20px;
   border-radius: 3px;
   cursor: pointer;
-  font-family: var(--book);
+  font-family: var(--sans);
   font-size: 17px;
   line-height: 1.5;
   font-weight: 500;
@@ -847,7 +845,7 @@ body::before {
   border: 1px solid #5a4022;
   border-radius: 4px;
   cursor: pointer;
-  font-family: var(--book);
+  font-family: var(--sans);
   color: var(--parchment);
   transition: all 0.3s cubic-bezier(0.2, 0.85, 0.25, 1);
   min-height: 260px;
@@ -905,7 +903,7 @@ body::before {
 .door:hover .door-svg { color: var(--candle); }
 
 .door-label {
-  font-family: var(--book);
+  font-family: var(--sans);
   font-size: 15px;
   font-weight: 500;
   line-height: 1.45;
@@ -961,7 +959,7 @@ body::before {
   border-radius: 3px;
   padding: 15px 18px;
   font-size: 18px;
-  font-family: var(--book);
+  font-family: var(--sans);
   color: var(--parchment);
   letter-spacing: 0.01em;
   transition: all 0.18s;
@@ -1025,7 +1023,7 @@ body::before {
   padding: 13px 16px;
   border-radius: 3px;
   font-size: 15px;
-  font-family: var(--book);
+  font-family: var(--sans);
   font-weight: 500;
   text-align: left;
   cursor: pointer;
@@ -1058,7 +1056,7 @@ body::before {
   border: 1px solid var(--line-strong);
   border-radius: 3px;
   font-size: 15px;
-  font-family: var(--book);
+  font-family: var(--sans);
   font-weight: 500;
   animation: slotIn 0.4s both cubic-bezier(0.2, 0.85, 0.25, 1);
 }
@@ -1089,7 +1087,7 @@ body::before {
   font-style: italic;
   padding: 6px 2px;
   list-style: none;
-  font-family: var(--book);
+  font-family: var(--sans);
 }
 
 .sort-actions { display: flex; gap: 12px; justify-content: flex-end; }
@@ -1162,7 +1160,7 @@ body::before {
 }
 .hint p {
   margin: 0;
-  font-family: var(--book);
+  font-family: var(--sans);
   font-size: 16px;
   line-height: 1.65;
   color: #f8e0b8;
@@ -1234,7 +1232,7 @@ body::before {
 }
 
 .final-note {
-  font-family: var(--book);
+  font-family: var(--sans);
   font-size: 17px;
   line-height: 1.65;
   font-style: italic;
