@@ -25,11 +25,13 @@ class AmbientEngine {
   }
 
   _build() {
-    // Master chain: pad/drone → filter → reverb → master volume
+    // Master chain: pad/drone → filter → master volume.
+    // Tone v15 Reverb braucht await ready, sonst bleibt der gesamte Bus
+    // stumm. Reverb komplett raus — Atmosphaere kommt durch Filter-Sweep
+    // und langsame Hüllkurven.
     this.master = new Tone.Volume(-10).toDestination()
-    this.reverb = new Tone.Reverb({ decay: 12, wet: 0.55 }).connect(this.master)
     this.filter = new Tone.Filter({ frequency: 800, type: 'lowpass', Q: 0.7 })
-      .connect(this.reverb)
+      .connect(this.master)
 
     // Soft AM pad — slow attack/release, mehrstimmig
     this.pad = new Tone.PolySynth(Tone.AMSynth, {
@@ -60,7 +62,7 @@ class AmbientEngine {
     this.shimmerGain = new Tone.Gain(0.02)
     this.shimmerNoise.connect(this.shimmerFilter)
     this.shimmerFilter.connect(this.shimmerGain)
-    this.shimmerGain.connect(this.reverb)
+    this.shimmerGain.connect(this.filter)
 
     // SFX channel
     this.sfx = new Tone.Volume(-6).connect(this.master)
@@ -87,14 +89,14 @@ class AmbientEngine {
       modulationEnvelope: { attack: 0.1, decay: 0.6, sustain: 0.3, release: 2 }
     })
     this.trapSting.volume.value = -6
-    this.trapSting.connect(this.reverb)
+    this.trapSting.connect(this.filter)
 
     this.rumble = new Tone.NoiseSynth({
       noise: { type: 'brown' },
       envelope: { attack: 0.4, decay: 3, sustain: 0 }
     })
     this.rumble.volume.value = -14
-    this.rumble.connect(this.reverb)
+    this.rumble.connect(this.filter)
   }
 
   async start() {
@@ -112,6 +114,7 @@ class AmbientEngine {
     this.shimmerNoise.start()
     this._startLoops()
     this.started = true
+    console.log('[audio] gestartet, ctx =', Tone.getContext().state)
   }
 
   _startLoops() {
