@@ -1,204 +1,189 @@
 // =====================================================================
-//  Generativer Ambient + Sound-Effekte (Tone.js)
-//  Kein MP3, keine externen Dateien – Web Audio direkt im Browser.
-//  Pro Mood: Akkord, Drone, Filter-Cutoff. Wechsel per setMood().
+//  Ambient + Sound-Effekte — pure Web Audio API, keine Bibliothek.
+//  Tone.js v15 hatte breaking changes (Reverb-ready async etc.), die
+//  zu Totalstille fuehrten. Hier 100% nativ, kein Bundle-Overhead.
 // =====================================================================
 
-import * as Tone from 'tone'
-
 const MOODS = {
-  start:  { chord: ['C3', 'E3', 'G3', 'B3'], drone: 'C2',  cutoff: 800,  detune: 0 },
-  main:   { chord: ['C3', 'E3', 'G3', 'A3'], drone: 'C2',  cutoff: 1400, detune: 0 },
-  false:  { chord: ['C3', 'Eb3', 'G3', 'Bb3'], drone: 'Bb1', cutoff: 600, detune: -8 },
-  trap:   { chord: ['C2', 'Db3', 'F#3', 'A3'], drone: 'C1',  cutoff: 350, detune: -22 },
-  final:  { chord: ['C3', 'E3', 'G3', 'C4'], drone: 'C2',  cutoff: 2200, detune: 4 }
+  start: { freqs: [130.81, 164.81, 196.00, 246.94], cutoff:  800 }, // C3 E3 G3 B3
+  main:  { freqs: [130.81, 164.81, 196.00, 220.00], cutoff: 1400 }, // C3 E3 G3 A3
+  false: { freqs: [130.81, 155.56, 196.00, 233.08], cutoff:  600 }, // C3 Eb3 G3 Bb3
+  trap:  { freqs: [ 65.41, 138.59, 185.00, 220.00], cutoff:  350 }, // C2 Db3 F#3 A3
+  final: { freqs: [130.81, 164.81, 196.00, 261.63], cutoff: 2200 }  // C3 E3 G3 C4
 }
 
 class AmbientEngine {
   constructor() {
+    this.ctx = null
+    this.master = null
+    this.padFilter = null
+    this.padGain = null
+    this.padOscs = []
     this.started = false
     this.muted = true
     this.currentMood = 'start'
     this.lastTrap = 0
-    this.padLoop = null
-    this.droneLoop = null
-  }
-
-  _build() {
-    // Master chain: pad/drone → filter → master volume.
-    // Tone v15 Reverb braucht await ready, sonst bleibt der gesamte Bus
-    // stumm. Reverb komplett raus — Atmosphaere kommt durch Filter-Sweep
-    // und langsame Hüllkurven.
-    this.master = new Tone.Volume(-10).toDestination()
-    this.filter = new Tone.Filter({ frequency: 800, type: 'lowpass', Q: 0.7 })
-      .connect(this.master)
-
-    // Soft AM pad — slow attack/release, mehrstimmig
-    this.pad = new Tone.PolySynth(Tone.AMSynth, {
-      harmonicity: 1.5,
-      envelope: { attack: 5, decay: 2, sustain: 0.7, release: 8 },
-      modulation: { type: 'sine' },
-      modulationEnvelope: { attack: 3, decay: 0, sustain: 1, release: 6 }
-    })
-    this.pad.volume.value = -18
-    this.pad.connect(this.filter)
-
-    // Low drone
-    this.bass = new Tone.MonoSynth({
-      oscillator: { type: 'sine' },
-      envelope: { attack: 6, decay: 0.5, sustain: 1, release: 8 },
-      filter: { Q: 1, type: 'lowpass' },
-      filterEnvelope: {
-        attack: 4, decay: 0, sustain: 1, release: 4,
-        baseFrequency: 90, octaves: 2
-      }
-    })
-    this.bass.volume.value = -24
-    this.bass.connect(this.filter)
-
-    // Subtle stereo shimmer
-    this.shimmerNoise = new Tone.Noise('pink')
-    this.shimmerFilter = new Tone.Filter({ frequency: 3000, type: 'bandpass', Q: 6 })
-    this.shimmerGain = new Tone.Gain(0.02)
-    this.shimmerNoise.connect(this.shimmerFilter)
-    this.shimmerFilter.connect(this.shimmerGain)
-    this.shimmerGain.connect(this.filter)
-
-    // SFX channel
-    this.sfx = new Tone.Volume(-6).connect(this.master)
-    this.step = new Tone.MembraneSynth({
-      pitchDecay: 0.06, octaves: 4,
-      envelope: { attack: 0.001, decay: 0.25, sustain: 0, release: 0.1 }
-    })
-    this.step.volume.value = -16
-    this.step.connect(this.sfx)
-
-    this.whoosh = new Tone.NoiseSynth({
-      noise: { type: 'white' },
-      envelope: { attack: 0.02, decay: 0.5, sustain: 0 }
-    })
-    this.whooshFilter = new Tone.Filter({ frequency: 1500, type: 'bandpass', Q: 1 })
-    this.whoosh.volume.value = -22
-    this.whoosh.connect(this.whooshFilter)
-    this.whooshFilter.connect(this.sfx)
-
-    this.trapSting = new Tone.PolySynth(Tone.FMSynth, {
-      harmonicity: 0.5,
-      modulationIndex: 12,
-      envelope: { attack: 0.05, decay: 1.2, sustain: 0.5, release: 3 },
-      modulationEnvelope: { attack: 0.1, decay: 0.6, sustain: 0.3, release: 2 }
-    })
-    this.trapSting.volume.value = -6
-    this.trapSting.connect(this.filter)
-
-    this.rumble = new Tone.NoiseSynth({
-      noise: { type: 'brown' },
-      envelope: { attack: 0.4, decay: 3, sustain: 0 }
-    })
-    this.rumble.volume.value = -14
-    this.rumble.connect(this.filter)
   }
 
   async start() {
     if (this.started) return
-    // iOS Safari schliesst den AudioContext, wenn Tone.start() nicht
-    // SOFORT im User-Gesture aufgerufen wird. Deshalb zuerst entsperren,
-    // dann erst die schweren Synth-Graphen bauen.
     try {
-      await Tone.start()
+      const Ctx = window.AudioContext || window.webkitAudioContext
+      if (!Ctx) throw new Error('Web Audio API nicht verfuegbar')
+      this.ctx = new Ctx()
+      if (this.ctx.state === 'suspended') await this.ctx.resume()
     } catch (err) {
-      console.warn('[audio] Tone.start() schlug fehl:', err)
+      console.warn('[audio] AudioContext fehlgeschlagen:', err)
       return
     }
-    if (!this.master) this._build()
-    this.shimmerNoise.start()
-    this._startLoops()
+    this._build()
     this.started = true
-    console.log('[audio] gestartet, ctx =', Tone.getContext().state)
+    this._applyMood(this.currentMood, true)
+    console.log('[audio] gestartet, ctx =', this.ctx.state, 'muted =', this.muted)
   }
 
-  _startLoops() {
-    const padPlay = (time) => {
-      if (this.muted) return
-      const mood = MOODS[this.currentMood] || MOODS.main
-      const note = mood.chord[Math.floor(Math.random() * mood.chord.length)]
-      this.pad.detune.value = mood.detune
-      this.pad.triggerAttackRelease(note, '2n', time, 0.55)
-    }
-    this.padLoop = new Tone.Loop(padPlay, '4n').start(0)
-    this.padLoop.interval = '0:2'
+  _build() {
+    const ctx = this.ctx
+    this.master = ctx.createGain()
+    this.master.gain.value = this.muted ? 0 : 0.8
+    this.master.connect(ctx.destination)
 
-    const dronePlay = (time) => {
-      if (this.muted) return
-      const mood = MOODS[this.currentMood] || MOODS.main
-      this.bass.triggerAttackRelease(mood.drone, '2m', time, 0.5)
-    }
-    this.droneLoop = new Tone.Loop(dronePlay, '2m').start(0)
+    this.padFilter = ctx.createBiquadFilter()
+    this.padFilter.type = 'lowpass'
+    this.padFilter.frequency.value = MOODS[this.currentMood].cutoff
+    this.padFilter.Q.value = 0.7
+    this.padFilter.connect(this.master)
 
-    Tone.Transport.bpm.value = 50
-    Tone.Transport.start()
-  }
+    this.padGain = ctx.createGain()
+    this.padGain.gain.value = 0.18
+    this.padGain.connect(this.padFilter)
 
-  setMood(mood) {
-    if (!MOODS[mood] || mood === this.currentMood) return
-    this.currentMood = mood
-    if (!this.filter) return
-    this.filter.frequency.cancelScheduledValues(Tone.now())
-    this.filter.frequency.linearRampTo(MOODS[mood].cutoff, 2.5)
+    // Vier kontinuierliche Sinus/Dreieck-Oszillatoren als Akkord-Pad
+    const { freqs } = MOODS[this.currentMood]
+    this.padOscs = freqs.map((freq, i) => {
+      const osc = ctx.createOscillator()
+      osc.type = i === 0 ? 'sine' : 'triangle'
+      osc.frequency.value = freq
+      const g = ctx.createGain()
+      g.gain.value = i === 0 ? 0.55 : 0.28
+      osc.connect(g).connect(this.padGain)
+      osc.start()
+      return { osc, gain: g }
+    })
   }
 
   setMuted(muted) {
     this.muted = muted
-    if (this.master) this.master.mute = muted
+    if (!this.master || !this.ctx) return
+    const now = this.ctx.currentTime
+    const target = muted ? 0 : 0.8
+    this.master.gain.cancelScheduledValues(now)
+    this.master.gain.setValueAtTime(this.master.gain.value, now)
+    this.master.gain.linearRampToValueAtTime(target, now + 0.4)
   }
 
   isMuted() { return this.muted }
 
+  setMood(mood) {
+    if (!MOODS[mood] || mood === this.currentMood) return
+    this.currentMood = mood
+    if (!this.ctx) return
+    this._applyMood(mood, false)
+  }
+
+  _applyMood(mood, immediate) {
+    const m = MOODS[mood]
+    if (!this.padFilter) return
+    const now = this.ctx.currentTime
+    const dur = immediate ? 0.05 : 2.5
+    this.padFilter.frequency.cancelScheduledValues(now)
+    this.padFilter.frequency.setValueAtTime(this.padFilter.frequency.value, now)
+    this.padFilter.frequency.linearRampToValueAtTime(m.cutoff, now + dur)
+    this.padOscs.forEach(({ osc }, i) => {
+      const target = m.freqs[i] ?? m.freqs[0]
+      osc.frequency.cancelScheduledValues(now)
+      osc.frequency.setValueAtTime(osc.frequency.value, now)
+      osc.frequency.linearRampToValueAtTime(target, now + dur)
+    })
+  }
+
   // -- SFX ---------------------------------------------------------
 
-  playStep() {
-    if (this.muted || !this.step) return
-    this.step.triggerAttackRelease('C1', '16n', undefined, 0.25)
+  _beep(freq, duration, type, volume) {
+    if (this.muted || !this.ctx) return
+    const now = this.ctx.currentTime
+    const osc = this.ctx.createOscillator()
+    osc.type = type
+    osc.frequency.value = freq
+    const g = this.ctx.createGain()
+    g.gain.setValueAtTime(0, now)
+    g.gain.linearRampToValueAtTime(volume, now + 0.01)
+    g.gain.exponentialRampToValueAtTime(0.0001, now + duration)
+    osc.connect(g).connect(this.master)
+    osc.start(now)
+    osc.stop(now + duration + 0.05)
   }
 
-  playWhoosh() {
-    if (this.muted || !this.whoosh) return
-    this.whooshFilter.frequency.cancelScheduledValues(Tone.now())
-    this.whooshFilter.frequency.setValueAtTime(800, Tone.now())
-    this.whooshFilter.frequency.linearRampToValueAtTime(2400, Tone.now() + 0.35)
-    this.whoosh.triggerAttackRelease('4n')
+  _noiseSweep(startFreq, endFreq, duration, volume) {
+    if (this.muted || !this.ctx) return
+    const ctx = this.ctx
+    const now = ctx.currentTime
+    const bufferSize = Math.floor(ctx.sampleRate * duration)
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate)
+    const data = buffer.getChannelData(0)
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1
+    const src = ctx.createBufferSource()
+    src.buffer = buffer
+
+    const filter = ctx.createBiquadFilter()
+    filter.type = 'bandpass'
+    filter.Q.value = 1.5
+    filter.frequency.setValueAtTime(startFreq, now)
+    filter.frequency.linearRampToValueAtTime(endFreq, now + duration)
+
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0, now)
+    g.gain.linearRampToValueAtTime(volume, now + 0.02)
+    g.gain.linearRampToValueAtTime(0, now + duration)
+
+    src.connect(filter).connect(g).connect(this.master)
+    src.start(now)
+    src.stop(now + duration + 0.05)
   }
 
-  playDoor() {
-    if (this.muted || !this.whoosh) return
-    this.whooshFilter.frequency.cancelScheduledValues(Tone.now())
-    this.whooshFilter.frequency.setValueAtTime(400, Tone.now())
-    this.whooshFilter.frequency.linearRampToValueAtTime(120, Tone.now() + 0.5)
-    this.whoosh.triggerAttackRelease('2n')
+  playStep()    { this._beep(80, 0.12, 'sine', 0.2) }
+  playWhoosh()  { this._noiseSweep(800, 2400, 0.35, 0.12) }
+  playDoor()    { this._noiseSweep(400, 120, 0.5, 0.18) }
+
+  playSuccess() {
+    if (this.muted || !this.ctx) return
+    const notes = [261.63, 329.63, 392.00, 523.25] // C E G C
+    notes.forEach((f, i) => setTimeout(() => this._beep(f, 0.35, 'triangle', 0.22), i * 110))
   }
 
   playTrap() {
-    if (this.muted || !this.trapSting) return
-    const now = Tone.now()
+    if (this.muted || !this.ctx) return
+    const now = this.ctx.currentTime
     if (now - this.lastTrap < 0.5) return
     this.lastTrap = now
-    this.trapSting.triggerAttackRelease(['C2', 'Db3', 'F#3', 'A3'], '2n', now, 0.6)
-    this.rumble.triggerAttackRelease('1m', now)
-  }
-
-  playSuccess() {
-    if (this.muted || !this.pad) return
-    const now = Tone.now()
-    this.pad.triggerAttackRelease('C4', '8n', now, 0.4)
-    this.pad.triggerAttackRelease('E4', '8n', now + 0.12, 0.4)
-    this.pad.triggerAttackRelease('G4', '8n', now + 0.24, 0.4)
-    this.pad.triggerAttackRelease('C5', '4n', now + 0.36, 0.5)
+    const chord = [65.41, 138.59, 185.00, 220.00]
+    chord.forEach((f) => {
+      const osc = this.ctx.createOscillator()
+      osc.type = 'sawtooth'
+      osc.frequency.value = f
+      const g = this.ctx.createGain()
+      g.gain.setValueAtTime(0, now)
+      g.gain.linearRampToValueAtTime(0.09, now + 0.05)
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 1.5)
+      osc.connect(g).connect(this.master)
+      osc.start(now)
+      osc.stop(now + 1.6)
+    })
   }
 }
 
 export const audio = new AmbientEngine()
 
-// Mood-Helper: ein Raum → eine passende Stimmung
 export function moodForRoom(room, branch) {
   if (!room) return 'main'
   if (room.type === 'start') return 'start'
