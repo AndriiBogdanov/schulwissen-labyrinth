@@ -99,8 +99,16 @@ class AmbientEngine {
 
   async start() {
     if (this.started) return
+    // iOS Safari schliesst den AudioContext, wenn Tone.start() nicht
+    // SOFORT im User-Gesture aufgerufen wird. Deshalb zuerst entsperren,
+    // dann erst die schweren Synth-Graphen bauen.
+    try {
+      await Tone.start()
+    } catch (err) {
+      console.warn('[audio] Tone.start() schlug fehl:', err)
+      return
+    }
     if (!this.master) this._build()
-    await Tone.start()
     this.shimmerNoise.start()
     this._startLoops()
     this.started = true
