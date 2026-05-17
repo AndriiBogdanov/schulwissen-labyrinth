@@ -1,32 +1,14 @@
 // =====================================================================
-//  Audio-Engine
-//  Atmosphäre: gestreamte MP3-Loops (Kevin MacLeod, CC0 / public domain
-//  via incompetech.com). SFX (step/whoosh/door/success): kurz, generativ
-//  über Web Audio API — keine Latenz, kein Download.
+//  Audio-Engine — nur kurze Sound-Effekte, KEINE Hintergrundmusik.
+//  Alles generativ via Web Audio API, keine MP3-Downloads.
 // =====================================================================
-
-const AMBIENT_URL = 'audio/ambient.mp3'  // Long Note Four — Kevin MacLeod
-const TRAP_URL    = 'audio/trap.mp3'     // Hidden Past   — Kevin MacLeod
-
-// Lautstärken pro Mood. Spielen lassen wir IMMER den gleichen Loop —
-// nur die Lautstärke verändert sich, was den Wechsel der Stimmung
-// dezent unterstützt, ohne harten Track-Wechsel.
-const MOOD_VOL = {
-  start: 0.45,
-  main:  0.55,
-  false: 0.40,
-  trap:  0.30,
-  final: 0.55
-}
 
 class AudioEngine {
   constructor() {
     this.started = false
     this.muted = true
-    this.currentMood = 'start'
-    this.ambient = null
-    this.trapSting = null
-    this.ctx = null       // für SFX
+    this.currentMood = 'main'
+    this.ctx = null
     this.master = null
     this.lastTrap = 0
   }
@@ -34,68 +16,32 @@ class AudioEngine {
   async start() {
     if (this.started) return
     try {
-      // 1) Ambient-Loop
-      this.ambient = new Audio(AMBIENT_URL)
-      this.ambient.loop = true
-      this.ambient.volume = this.muted ? 0 : MOOD_VOL[this.currentMood]
-      this.ambient.preload = 'auto'
-      // play() braucht User-Gesture — wird vom Klick auf "Hineingehen" ausgelöst
-      await this.ambient.play().catch(err => {
-        console.warn('[audio] Ambient-Play geblockt:', err)
-      })
-
-      // 2) Trap-Sting (vorgeladen, gespielt nur on demand)
-      this.trapSting = new Audio(TRAP_URL)
-      this.trapSting.volume = 0
-      this.trapSting.preload = 'auto'
-
-      // 3) Web Audio Context für SFX (kurze Beeps + Noise-Sweeps)
       const Ctx = window.AudioContext || window.webkitAudioContext
-      if (Ctx) {
-        this.ctx = new Ctx()
-        if (this.ctx.state === 'suspended') await this.ctx.resume()
-        this.master = this.ctx.createGain()
-        this.master.gain.value = this.muted ? 0 : 0.7
-        this.master.connect(this.ctx.destination)
-      }
+      if (!Ctx) return
+      this.ctx = new Ctx()
+      if (this.ctx.state === 'suspended') await this.ctx.resume()
+      this.master = this.ctx.createGain()
+      this.master.gain.value = this.muted ? 0 : 0.7
+      this.master.connect(this.ctx.destination)
     } catch (err) {
       console.warn('[audio] start() Fehler:', err)
       return
     }
     this.started = true
-    console.log('[audio] gestartet, muted =', this.muted)
   }
 
   setMuted(muted) {
     this.muted = muted
-    if (this.ambient) {
-      this.ambient.volume = muted ? 0 : MOOD_VOL[this.currentMood]
-      if (!muted && this.ambient.paused) this.ambient.play().catch(()=>{})
-    }
     if (this.master) this.master.gain.value = muted ? 0 : 0.7
   }
 
   isMuted() { return this.muted }
 
-  setMood(mood) {
-    if (!MOOD_VOL[mood] || mood === this.currentMood) return
-    this.currentMood = mood
-    if (this.ambient && !this.muted) {
-      // smooth volume crossfade
-      const target = MOOD_VOL[mood]
-      const start = this.ambient.volume
-      const steps = 20, dur = 1500
-      let i = 0
-      const iv = setInterval(() => {
-        i++
-        const t = i / steps
-        this.ambient.volume = start + (target - start) * t
-        if (i >= steps) clearInterval(iv)
-      }, dur / steps)
-    }
-  }
+  // Mood-Wechsel beeinflusst nichts mehr — keine Hintergrundmusik.
+  // Methode bleibt, damit App.jsx nichts anpassen muss.
+  setMood(mood) { this.currentMood = mood }
 
-  // -- SFX (Web Audio, generativ) ----------------------------------
+  // -- SFX ---------------------------------------------------------
 
   _beep(freq, duration, type, volume) {
     if (this.muted || !this.ctx) return
@@ -148,15 +94,22 @@ class AudioEngine {
   }
 
   playTrap() {
-    if (this.muted) return
-    const now = performance.now() / 1000
-    if (now - this.lastTrap < 1) return
+    if (this.muted || !this.ctx) return
+    const now = this.ctx.currentTime
+    if (now - this.lastTrap < 0.5) return
     this.lastTrap = now
-    if (this.trapSting) {
-      this.trapSting.currentTime = 0
-      this.trapSting.volume = 0.7
-      this.trapSting.play().catch(()=>{})
-    }
+    ;[65.41, 138.59, 185.00, 220.00].forEach((f) => {
+      const osc = this.ctx.createOscillator()
+      osc.type = 'sawtooth'
+      osc.frequency.value = f
+      const g = this.ctx.createGain()
+      g.gain.setValueAtTime(0, now)
+      g.gain.linearRampToValueAtTime(0.08, now + 0.05)
+      g.gain.exponentialRampToValueAtTime(0.0001, now + 1.5)
+      osc.connect(g).connect(this.master)
+      osc.start(now)
+      osc.stop(now + 1.6)
+    })
   }
 }
 
