@@ -8,3 +8,7 @@ dist-ssr
 .idea
 *.log
 vite.config.js.timestamp-*
+
+# Lokale .env – Vorlage liegt unter deploy/.env.example
+.env
+deploy/.env

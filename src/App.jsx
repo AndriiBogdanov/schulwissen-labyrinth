@@ -425,6 +425,8 @@ function FinalRoom({ room, stats, onRestart }) {
 
       <p className="final-note">{note}</p>
 
+      <WaxSeal>§</WaxSeal>
+
       <button type="button" className="btn-primary btn-large" onClick={onRestart}>
         Noch einmal durch das Labyrinth
       </button>
